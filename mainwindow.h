@@ -12,17 +12,20 @@
 typedef struct {
     QPoint centro;//centro de la pelotita actual
     QPoint centroI;//centro de la pelotita inicial
-    float angulo;//angulo actual
-    float anguloI;//angulo inicial
-    float velI;//velocidad inicial
-    int vel;//velocidad actual
-    float velX;//velocidad en X
-    float velY;//velocidad en Y
-    float gravedad;
-    float friccion;
+    double posAntX;
+    double posAntY;
+    double angulo;//angulo actual
+    double anguloI;//angulo inicial
+    double velI;//velocidad inicial
+    double velX;//velocidad en X
+    double velY;//velocidad en Y
+    double gravedad;
+    double friccion;
     int radio;//radio de la pelotita
     int alfha;//porcentaje de perdida de energia
+    double escMetro;//a cuanto equivale 1 metro en pixeles
     uint8_t InMove;//vale 1 si esta en movimiento o 0 si esta detenida
+
 }s_pelota;
 
 
@@ -48,6 +51,9 @@ private slots:
     void on_BotonVelocidad_clicked();
 
     void on_BotonPosY_clicked();
+
+    void resizeEvent(QResizeEvent *event);
+    void on_BotonPosX_clicked();
 
 private:
     Ui::MainWindow *ui;

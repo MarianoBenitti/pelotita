@@ -20,155 +20,154 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QWidget" name="widget" native="true">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>10</y>
-      <width>400</width>
-      <height>400</height>
-     </rect>
-    </property>
-    <property name="minimumSize">
-     <size>
-      <width>0</width>
-      <height>0</height>
-     </size>
-    </property>
-   </widget>
-   <widget class="QWidget" name="layoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>430</y>
-      <width>641</width>
-      <height>62</height>
-     </rect>
-    </property>
-    <layout class="QHBoxLayout" name="TABLERO" stretch="0,0,0,0,0">
-     <item>
-      <layout class="QHBoxLayout" name="TABLERORESETLANZAR">
-       <item>
-        <widget class="QPushButton" name="BotonLanzar">
-         <property name="text">
-          <string>LANZAR</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-     <item>
-      <layout class="QVBoxLayout" name="TABLEROVELOCIDAD">
-       <item>
-        <layout class="QHBoxLayout" name="ANGULO" stretch="1,0">
-         <item>
-          <widget class="QLineEdit" name="AnguloLineEdit">
-           <property name="readOnly">
-            <bool>false</bool>
-           </property>
-           <property name="placeholderText">
-            <string>Angulo</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="BotonAngulo">
-           <property name="text">
-            <string>SEL. ANGULO</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <layout class="QHBoxLayout" name="VELOCIDAD" stretch="1,0">
-         <item>
-          <widget class="QLineEdit" name="VelocidadLineEdit">
-           <property name="placeholderText">
-            <string>Velocidad</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="BotonVelocidad">
-           <property name="text">
-            <string>SEL. VELOC</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-      </layout>
-     </item>
-     <item>
-      <layout class="QVBoxLayout" name="TABLEROPOSICION">
-       <item>
-        <layout class="QHBoxLayout" name="POSY" stretch="1,0">
-         <item>
-          <widget class="QLineEdit" name="PosYLineEdit">
-           <property name="readOnly">
-            <bool>false</bool>
-           </property>
-           <property name="placeholderText">
-            <string>Pos Y </string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="BotonPosY">
-           <property name="text">
-            <string>PY</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <layout class="QHBoxLayout" name="POSX" stretch="1,0">
-         <item>
-          <widget class="QLineEdit" name="PosXLineEdit">
-           <property name="placeholderText">
-            <string>Pos X</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="BotonPosX">
-           <property name="text">
-            <string>PX</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-      </layout>
-     </item>
-     <item>
-      <widget class="QCheckBox" name="CheckFriccion">
-       <property name="text">
-        <string>FRICCIÓN</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QCheckBox" name="Checkgravedad">
-       <property name="text">
-        <string>GRAVEDAD</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </widget>
-   <widget class="QTextBrowser" name="Consola">
-    <property name="geometry">
-     <rect>
-      <x>430</x>
-      <y>10</y>
-      <width>256</width>
-      <height>401</height>
-     </rect>
-    </property>
-   </widget>
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="1" column="0">
+     <layout class="QHBoxLayout" name="TABLERO" stretch="0,0,0,0,0,0">
+      <item>
+       <layout class="QHBoxLayout" name="TABLERORESETLANZAR">
+        <item>
+         <widget class="QPushButton" name="BotonLanzar">
+          <property name="text">
+           <string>LANZAR</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="TABLEROVELOCIDAD">
+        <item>
+         <layout class="QHBoxLayout" name="ANGULO" stretch="1,0">
+          <item>
+           <widget class="QLineEdit" name="AnguloLineEdit">
+            <property name="readOnly">
+             <bool>false</bool>
+            </property>
+            <property name="placeholderText">
+             <string>Angulo</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="BotonAngulo">
+            <property name="text">
+             <string>SEL. ANGULO</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="VELOCIDAD" stretch="1,0">
+          <item>
+           <widget class="QLineEdit" name="VelocidadLineEdit">
+            <property name="placeholderText">
+             <string>Velocidad</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="BotonVelocidad">
+            <property name="text">
+             <string>SEL. VELOC</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="TABLEROPOSICION">
+        <item>
+         <layout class="QHBoxLayout" name="POSY" stretch="1,0">
+          <item>
+           <widget class="QLineEdit" name="PosYLineEdit">
+            <property name="readOnly">
+             <bool>false</bool>
+            </property>
+            <property name="placeholderText">
+             <string>Pos Y </string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="BotonPosY">
+            <property name="text">
+             <string>PY</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="POSX" stretch="1,0">
+          <item>
+           <widget class="QLineEdit" name="PosXLineEdit">
+            <property name="placeholderText">
+             <string>Pos X</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="BotonPosX">
+            <property name="text">
+             <string>PX</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="CheckTrayectoria">
+        <property name="text">
+         <string>TRAYECTORIA</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="CheckFriccion">
+        <property name="text">
+         <string>FRICCIÓN</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="Checkgravedad">
+        <property name="text">
+         <string>GRAVEDAD</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="0" column="0">
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0">
+      <item>
+       <widget class="QWidget" name="widget" native="true">
+        <property name="minimumSize">
+         <size>
+          <width>660</width>
+          <height>500</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QTextBrowser" name="Consola">
+        <property name="maximumSize">
+         <size>
+          <width>110</width>
+          <height>16777215</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">

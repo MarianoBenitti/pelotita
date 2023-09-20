@@ -6,6 +6,7 @@
 
 
 
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -17,14 +18,16 @@ MainWindow::MainWindow(QWidget *parent)
     connect(TimerGen, &QTimer::timeout,this,&MainWindow::TimerGen1);
     TimerGen->start(10);
     s_pelotita.InMove=0;
-    s_pelotita.alfha=50;
+    s_pelotita.alfha=10;
     s_pelotita.anguloI=-40;
-    s_pelotita.centroI.setX(15);
-    s_pelotita.centroI.setY(-15);
-    s_pelotita.velI=10;
+    s_pelotita.escMetro=100;
     s_pelotita.radio=10;
-    s_pelotita.gravedad=0.09;
+    s_pelotita.centroI.setX(10+s_pelotita.radio);
+    s_pelotita.centroI.setY(-(10+s_pelotita.radio));
+    s_pelotita.velI=10;
+    s_pelotita.gravedad=0.098;
     s_pelotita.friccion=0.05;
+
 }
 
 MainWindow::~MainWindow()
@@ -34,7 +37,7 @@ MainWindow::~MainWindow()
 
 
 void MainWindow::TimerGen1(){
-
+    QPoint CentroAnt;
     QPainter QPainterEsp(QPaintBall->getCanvas());
     QPainterEsp.translate(0,ui->widget->height());
     QPen pen;
@@ -53,6 +56,17 @@ void MainWindow::TimerGen1(){
         QPainterEsp.setPen(pen);
         QPainterEsp.setBrush(brush);
         QPainterEsp.drawEllipse(s_pelotita.centro,s_pelotita.radio,s_pelotita.radio);
+
+        if(ui->CheckTrayectoria->isChecked()){
+
+                pen.setColor(Qt::white);
+                brush.setColor(Qt::green);
+                QPainterEsp.setPen(pen);
+                QPainterEsp.setBrush(brush);
+                QPainterEsp.drawEllipse(s_pelotita.centro,s_pelotita.radio,s_pelotita.radio);
+
+
+        }
         //recalculamos la posicion
         RecalPelota(&s_pelotita);
         //la dibujamos en la posicion actual
@@ -87,8 +101,8 @@ void MainWindow::on_BotonLanzar_clicked()
     }else{
         ui->BotonLanzar->setText("RESETEAR");
         s_pelotita.InMove=1;
-        s_pelotita.velX=s_pelotita.velI*cos(s_pelotita.anguloI/180*M_PI);
-        s_pelotita.velY=s_pelotita.velI*sin(s_pelotita.anguloI/180*M_PI);
+        s_pelotita.velX=s_pelotita.velI*qCos(s_pelotita.anguloI/180*M_PI);
+        s_pelotita.velY=s_pelotita.velI*qSin(s_pelotita.anguloI/180*M_PI);
         s_pelotita.velY=-s_pelotita.velY;//invertimos el signo porque el eje y esta invertido
         s_pelotita.centro.setX(s_pelotita.centroI.x());
         s_pelotita.centro.setY(s_pelotita.centroI.y());
@@ -96,8 +110,8 @@ void MainWindow::on_BotonLanzar_clicked()
 }
 
 void MainWindow::RecalPelota(s_pelota *s_Pelota){
-    int posAntX;
-    int posAntY;
+    float posAntX;
+    float posAntY;
     double porcRecVel;//porcentaje de distancia de velocidad recorrida antes del choque
     float distPared;
     posAntX=s_Pelota->centro.x();
@@ -107,8 +121,8 @@ void MainWindow::RecalPelota(s_pelota *s_Pelota){
     s_Pelota->angulo=qAtan(-s_Pelota->velY/s_Pelota->velX);
 
     //cambiamos la posicion
-    s_Pelota->centro.setX((s_Pelota->centro.x()+s_Pelota->velX));
-    s_Pelota->centro.setY((s_Pelota->centro.y()+s_Pelota->velY));
+    s_Pelota->centro.setX((qCeil(s_Pelota->centro.x()+s_Pelota->velX*s_Pelota->escMetro/100.0)));//se divide por 100 porque es la cantidad de veces que entran 10 ms en un segundo
+    s_Pelota->centro.setY((qCeil(s_Pelota->centro.y()+s_Pelota->velY*s_Pelota->escMetro/100.0)));
 
     //si choca la pared derecha
     if((s_Pelota->centro.x()+s_Pelota->radio)>=ui->widget->width()){
@@ -125,7 +139,7 @@ void MainWindow::RecalPelota(s_pelota *s_Pelota){
         }
         //se calcula la nueva posicion desde la pared tomando el radio y el porcentaje de velocidad que falta por recorrer luego de reducir la misma
         if(porcRecVel>0){
-        s_Pelota->centro.setX(qCeil(ui->widget->width()-s_Pelota->radio+s_Pelota->velX*(1-porcRecVel)));
+            s_Pelota->centro.setX(qCeil(ui->widget->width()-s_Pelota->radio+(s_Pelota->velX/100*s_Pelota->escMetro)*(1-porcRecVel)));
         }
 
 }
@@ -144,7 +158,7 @@ void MainWindow::RecalPelota(s_pelota *s_Pelota){
         //se calcula la nueva posicion desde la pared tomando el radio y el porcentaje de velocidad que falta por recorrer luego de reducir la misma
         if(porcRecVel>0){
         //COLOCAMOS LA NUEVA POSICION
-        s_Pelota->centro.setX(qCeil(s_Pelota->radio+s_Pelota->velX*(1-porcRecVel)));
+        s_Pelota->centro.setX(qCeil(s_Pelota->radio+(s_Pelota->velX/100*s_Pelota->escMetro)*(1-porcRecVel)));
         }
 
     }
@@ -162,7 +176,7 @@ void MainWindow::RecalPelota(s_pelota *s_Pelota){
         s_Pelota->velY=0;
         }
 
-        s_Pelota->centro.setY(qCeil((-ui->widget->height())+s_Pelota->radio+s_Pelota->velY*(1-porcRecVel)));
+        s_Pelota->centro.setY(qCeil((-ui->widget->height())+s_Pelota->radio+(s_Pelota->velY/100*s_Pelota->escMetro)*(1-porcRecVel)));
 
     }
 
@@ -180,13 +194,13 @@ void MainWindow::RecalPelota(s_pelota *s_Pelota){
         s_Pelota->velY=0;
         }
         if(porcRecVel>0){
-        s_Pelota->centro.setY(qCeil((-s_Pelota->radio)+s_Pelota->velY*(1-porcRecVel)));
+        s_Pelota->centro.setY(qCeil((-s_Pelota->radio)+(s_Pelota->velY/100*s_Pelota->escMetro)*(1-porcRecVel)));
         }
        }
 
     //con gravedad
        if((s_Pelota->centro.y()+s_Pelota->radio)<0 && ui->Checkgravedad->isChecked()){//si la pelota no toca el piso tiene aceleracion de la gravedad
-        s_Pelota->velY=s_Pelota->velY+s_Pelota->gravedad;
+        s_Pelota->velY=s_Pelota->velY+(s_Pelota->gravedad);
     }
     //con coeficiente de friccion
     if((s_Pelota->centro.y()+s_Pelota->radio)==0 && ui->CheckFriccion->isChecked()){//si la pelota no toca el piso tiene aceleracion de la gravedad
@@ -242,6 +256,38 @@ void MainWindow::on_BotonVelocidad_clicked()
 
 void MainWindow::on_BotonPosY_clicked()
 {
+    QString str;
+    int y;
 
+    str=ui->PosYLineEdit->text();
+
+    y=str.toInt();
+    y=-y;
+    if(y<(0-s_pelotita.radio) && y>(-ui->widget->height()+s_pelotita.radio)){
+        s_pelotita.centroI.setY(y);
+    }
+    BorrarPantalla();
+}
+
+void MainWindow::resizeEvent(QResizeEvent *event)
+{
+    Q_UNUSED(event);
+    QPaintBall->resize(ui->widget->width(),ui->widget->height());
+
+}
+
+
+void MainWindow::on_BotonPosX_clicked()
+{
+    QString str;
+    int x;
+
+    str=ui->PosYLineEdit->text();
+
+    x=str.toInt();
+    if(x>(s_pelotita.radio) && x<(ui->widget->width()-s_pelotita.radio)){
+        s_pelotita.centroI.setX(x);
+    }
+    BorrarPantalla();
 }
 
