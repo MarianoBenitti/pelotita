@@ -99,20 +99,41 @@ private slots:
 
     void on_SendButton_clicked();
 
-        /** \fn DecodeCMD
+     /** \fn DecodeCMD
      * \brief
      *  Esta funcion revisa si se ingresa un comando, detecta el header y una vez detectado
      *  prepara la estructura que se utilizara para analizarlo posteriormente en otra funcion
      * */
         void DecodeCMD();
 
-        /** \fn ExecuteCMD
+     /** \fn ExecuteCMD
      * \brief
      *  Esta funcion ejecuta el comando con los datos ingresados en la estructura
      *  una vez determinado el comando por su id procede a ejecutarlo
      * \param[in]: datosCMD es la estructura donde estan todos los datos leidos
      * */
         void ExecuteCMD(s_LDatos *datosCMD);
+
+     /** \fn ColocarHeader
+     * \brief
+     *  Esta funcion carga en el buffer de escritura el proximo comando a enviar a la pc
+     *
+     * \param[in]: datosE es la estructura del buffer de escritura
+     * \param[in]: ID es el id del comando que se preparara para enviar
+     * \param[in]: nbytes es el numero de bytes de datos del comando es decir el length
+     * */
+            void ColocarHeader(s_EDatos *datosE,uint8_t ID,uint8_t nBytes);
+
+     /** \fn ColocarPayload
+     * \brief
+     *  Esta funcion carga en el buffer de escritura el proximo comando a enviar a la pc
+     *
+     * \param[in]: datosE es la estructura del buffer de escritura
+     * \param[in]: ID es el id del comando que se preparara para enviar
+     * \param[in]: string es la cadena de datos sin el id
+     * \param[in]: nDatos es la cantidad de datos de la cadena
+     * */
+            void ColocarPayload(s_EDatos *datosE,uint8_t *string,uint8_t nDatos);
 private:
     Ui::MainWindow *ui;
     s_pelota s_pelotita;
@@ -124,5 +145,6 @@ private:
     uint8_t bufferE[256];
     s_LDatos datosLec;
     uint8_t bufferL[256];
+    band banderas;
 };
 #endif // MAINWINDOW_H

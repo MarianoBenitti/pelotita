@@ -2,7 +2,7 @@
 #include "ui_mainwindow.h"
 #include "QtMath"
 
-
+#define ISNEWCMD banderas.bit.b0
 
 
 
@@ -103,6 +103,15 @@ void MainWindow::TimerGen1(){
     }
 
 
+    if (datosLec.iRE!=datosLec.iRL){
+        DecodeCMD();
+        ui->commandsConsole->appendPlainText("llega comando");
+        printf("[%i]{%i}",datosLec.iRE,datosLec.iRL);
+    }
+    if(ISNEWCMD){
+        ExecuteCMD(&datosLec);
+        ISNEWCMD=0;
+    }
 
 
     ui->widget->update();
@@ -329,18 +338,22 @@ void MainWindow::on_BotonPosX_clicked()
 
 void MainWindow::OnRxQSerialPort1(){
     uint8_t cont;
-    QString str;
-    cont=QSerialPort1->bytesAvailable();
+    uint8_t buffer[255];
+    int i;
 
-    QSerialPort1->read((char*)datosLec.bufL,cont);
-    /*
-    str="";
-    for(int i=0;i<cont;i++){
-        str=str + QString(bufRx[i]);
+    cont=(QSerialPort1->bytesAvailable());
+    if(cont>0){
+        QSerialPort1->read((char*)buffer,cont);
+
+        for(i=0;i<cont;i++){
+        datosLec.bufL[datosLec.iRE]=buffer[i];
+            datosLec.iRE++;
+            if(datosLec.iRE>=datosLec.tamBuffer){
+            datosLec.iRE=0;
+
+            }
+        }
     }
-    */
-    ui->commandsConsole->appendPlainText(str);
-
 }
 
 
@@ -363,7 +376,7 @@ void MainWindow::on_OpenCloseButton_clicked()
 
 
 void MainWindow::on_SendButton_clicked()
-{   uint8_t ID;
+{  // uint8_t ID;
 
     char str[256];
 
@@ -382,11 +395,179 @@ void MainWindow::on_SendButton_clicked()
 
 void MainWindow::DecodeCMD()
 {
+    uint8_t indiceE;
+    indiceE=datosLec.iRE;//guardamos la posicion del buffer de escritura hasta donde esta actualmente
+    while(datosLec.iRL!=indiceE){
+        switch (datosLec.estDecode){
+        case EST_U:
+        if(datosLec.bufL[datosLec.iRL]=='U'){
+                    datosLec.estDecode=EST_N;
+            printf("%x",datosLec.bufL[datosLec.iRL]);
+        }
 
+        break;
+        case EST_N:if(datosLec.bufL[datosLec.iRL]=='N'){
+                    datosLec.estDecode=EST_E;
+
+                    printf("%x",datosLec.bufL[datosLec.iRL]);
+        }else{
+                    if(datosLec.iRL>0){
+                        datosLec.iRL--;
+                    }else{
+                        datosLec.iRL=datosLec.tamBuffer-1;
+                    }
+                    datosLec.estDecode=EST_U;
+        }
+        break;
+        case EST_E:if(datosLec.bufL[datosLec.iRL]=='E'){
+                    datosLec.estDecode=EST_R;
+                   printf("%x",datosLec.bufL[datosLec.iRL]);
+                     }else{
+                    if(datosLec.iRL>0){
+                        datosLec.iRL--;
+                    }else{
+                        datosLec.iRL=datosLec.tamBuffer-1;
+                    }
+                    datosLec.estDecode=EST_U;
+                     }
+        break;
+        case EST_R:if(datosLec.bufL[datosLec.iRL]=='R'){
+                    datosLec.estDecode=NUMBYTES;
+                   printf("%x",datosLec.bufL[datosLec.iRL]);
+        }else{
+                    if(datosLec.iRL>0){
+                        datosLec.iRL--;
+                    }else{
+                        datosLec.iRL=datosLec.tamBuffer-1;
+                    }
+                    datosLec.estDecode=EST_U;
+        }
+        break;
+        case NUMBYTES: datosLec.nBytes=datosLec.bufL[datosLec.iRL];
+                        datosLec.estDecode=TOKEN;
+                    printf("%x",datosLec.bufL[datosLec.iRL]);
+        break;
+        case TOKEN:if(datosLec.bufL[datosLec.iRL]==':'){
+                    datosLec.estDecode=PAYLOAD;
+                    printf("%x",datosLec.bufL[datosLec.iRL]);
+        }else{
+                    if(datosLec.iRL>0){
+                        datosLec.iRL--;
+                    }else{
+                        datosLec.iRL=datosLec.tamBuffer-1;
+                    }
+                    datosLec.estDecode=EST_U;
+        }
+        break;
+        case PAYLOAD:
+                    printf("%x",datosLec.bufL[datosLec.iRL]);
+        datosLec.idCMD=datosLec.bufL[datosLec.iRL];//guardo la id del comando
+        datosLec.iDatos=datosLec.iRL;//guardo la posicion de los datos
+        datosLec.checksum='U'^'N'^'E'^'R'^datosLec.nBytes^':'^datosLec.idCMD;//inicializamos el checksum
+        datosLec.iChecksum=datosLec.iDatos+datosLec.nBytes-1;//guardo la posicion del checksum esperada
+        datosLec.estDecode=CHECKSUM;
+        break;
+        case CHECKSUM:
+                    if(datosLec.iRL!=datosLec.iChecksum){
+                    datosLec.checksum=datosLec.checksum^datosLec.bufL[datosLec.iRL];
+                    }else{
+                    printf("%x",datosLec.bufL[datosLec.iRL]);
+                    printf("%x-%x",datosLec.bufL[datosLec.iRL],datosLec.checksum);
+                    if(datosLec.bufL[datosLec.iRL]==datosLec.checksum){
+                        ISNEWCMD=1;
+
+                    }else{
+                        if(datosLec.iRL>0){//VOLVEMOS A VERIFICAR SI ES UNA U
+                            datosLec.iRL--;
+                        }else{
+                            datosLec.iRL=datosLec.tamBuffer-1;
+                        }
+                    }
+                    datosLec.estDecode=EST_U;
+                    }
+
+        break;
+        default:datosLec.estDecode=EST_U;
+        break;
+        }
+
+        datosLec.iRL++;
+        if(datosLec.iRL>=datosLec.tamBuffer){
+        datosLec.iRL=0;
+        }
+    }
 }
 
 void MainWindow::ExecuteCMD(s_LDatos *datosCMD)
 {
+    uint8_t str[35];
+    switch (datosCMD->idCMD){
+    case 0xF0:
+        if(datosCMD->bufL[datosCMD->iDatos+1]==0x0D){
+        ui->commandsConsole->appendPlainText("ESTOY VIVO");
+        }
+        break;
 
+    default:
+        break;
+    }
+}
+
+void MainWindow::ColocarHeader(s_EDatos *datosE, uint8_t ID, uint8_t nBytes)
+{
+    datosE->bufE[datosE->iTE]='U';
+    datosE->iTE++;
+    if(datosE->iTE>=datosE->tamBuffer){
+        datosE->iTE=0;
+    }
+    datosE->bufE[datosE->iTE]='N';
+    datosE->iTE++;
+    if(datosE->iTE>=datosE->tamBuffer){
+        datosE->iTE=0;
+    }
+    datosE->bufE[datosE->iTE]='E';
+    datosE->iTE++;
+    if(datosE->iTE>=datosE->tamBuffer){
+        datosE->iTE=0;
+    }
+    datosE->bufE[datosE->iTE]='R';
+    datosE->iTE++;
+    if(datosE->iTE>=datosE->tamBuffer){
+        datosE->iTE=0;
+    }
+    datosE->bufE[datosE->iTE]=nBytes;
+    datosE->iTE++;
+    if(datosE->iTE>=datosE->tamBuffer){
+        datosE->iTE=0;
+    }
+    datosE->bufE[datosE->iTE]=':';
+    datosE->iTE++;
+    if(datosE->iTE>=datosE->tamBuffer){
+        datosE->iTE=0;
+    }
+    datosE->bufE[datosE->iTE]=ID;
+    datosE->iTE++;
+    if(datosE->iTE>=datosE->tamBuffer){
+        datosE->iTE=0;
+    }
+    datosE->checksum='U'^'N'^'E'^'R'^nBytes^':'^ID;//inicializamos el checksum
+}
+
+void MainWindow::ColocarPayload(s_EDatos *datosE, uint8_t *string, uint8_t nDatos)
+{
+    uint8_t i;
+    for(i=0;i<nDatos;i++){
+        datosE->checksum=datosE->checksum^string[i];
+        datosE->bufE[datosE->iTE]=string[i];
+        datosE->iTE++;
+        if(datosE->iTE>=datosE->tamBuffer){
+        datosE->iTE=0;
+        }
+    }
+    datosE->bufE[datosE->iTE]=datosE->checksum;
+    datosE->iTE++;
+    if(datosE->iTE>=datosE->tamBuffer){
+        datosE->iTE=0;
+    }
 }
 
