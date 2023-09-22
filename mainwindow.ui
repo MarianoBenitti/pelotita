@@ -21,6 +21,73 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0">
+      <item>
+       <widget class="QWidget" name="widget" native="true">
+        <property name="minimumSize">
+         <size>
+          <width>660</width>
+          <height>500</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="verticalLayout_3">
+        <item>
+         <widget class="QTextBrowser" name="Consola">
+          <property name="maximumSize">
+           <size>
+            <width>110</width>
+            <height>16777215</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPlainTextEdit" name="commandsConsole"/>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="PortLine">
+          <item>
+           <widget class="QLineEdit" name="PortLinEdit">
+            <property name="placeholderText">
+             <string>PORT</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="OpenCloseButton">
+            <property name="text">
+             <string>OPEN</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="CommandLine">
+          <item>
+           <widget class="QLineEdit" name="CommandlineEdit">
+            <property name="placeholderText">
+             <string>COMMAND</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="SendButton">
+            <property name="text">
+             <string>SEND</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
     <item row="1" column="0">
      <layout class="QHBoxLayout" name="TABLERO" stretch="0,0,0,0,0,0">
       <item>
@@ -138,30 +205,6 @@
        <widget class="QCheckBox" name="Checkgravedad">
         <property name="text">
          <string>GRAVEDAD</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item row="0" column="0">
-     <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0">
-      <item>
-       <widget class="QWidget" name="widget" native="true">
-        <property name="minimumSize">
-         <size>
-          <width>660</width>
-          <height>500</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QTextBrowser" name="Consola">
-        <property name="maximumSize">
-         <size>
-          <width>110</width>
-          <height>16777215</height>
-         </size>
         </property>
        </widget>
       </item>
