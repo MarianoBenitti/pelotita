@@ -134,6 +134,10 @@ private slots:
      * \param[in]: nDatos es la cantidad de datos de la cadena
      * */
             void ColocarPayload(s_EDatos *datosE,uint8_t *string,uint8_t nDatos);
+
+    //comandos
+
+            void Ack(s_LDatos *datosCMD);
 private:
     Ui::MainWindow *ui;
     s_pelota s_pelotita;

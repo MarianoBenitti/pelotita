@@ -6,7 +6,6 @@
 
 
 
-
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -338,7 +337,7 @@ void MainWindow::on_BotonPosX_clicked()
 
 void MainWindow::OnRxQSerialPort1(){
     uint8_t cont;
-    uint8_t buffer[255];
+    uint8_t buffer[256];
     int i;
 
     cont=(QSerialPort1->bytesAvailable());
@@ -376,20 +375,36 @@ void MainWindow::on_OpenCloseButton_clicked()
 
 
 void MainWindow::on_SendButton_clicked()
-{  // uint8_t ID;
+{
+    const char *comandos[4];
+    const char ALIVE[]="ALIVE";
+    const char FIRMWARE[]="FIRMWARE";
+    comandos[0]=ALIVE;
+    comandos[1]=FIRMWARE;
+    int comand=0;
+    int i;
+    uint8_t str[256];
+    for(i=0;i<4;i++){
+        if(QString::compare(QString(comandos[i]),QString(ui->CommandlineEdit->text()),Qt::CaseSensitive)==0){
+            comand=i;
+            switch(comand){
+            case 0: ColocarHeader(&datosEsc,0xF0,2);
+                    ColocarPayload(&datosEsc,str,0);
+                break;
+            case 1: ColocarHeader(&datosEsc,0xF1,2);
+                    ColocarPayload(&datosEsc,str,0);
+                break;
+            case 2:
+                break;
+                default:
+            break;
 
-    char str[256];
+            }
+      }
+    }
 
     if(QSerialPort1->isOpen()){
-        str[0]='U';
-        str[1]='N';
-        str[2]='E';
-        str[3]='R';
-        str[4]=0x02;
-        str[5]=':';
-        str[6]=0xF0;
-        str[7]=0xC4;
-        QSerialPort1->write(str,8);
+        QSerialPort1->write((char*)datosEsc.bufE,8);
     }
 }
 
@@ -502,12 +517,10 @@ void MainWindow::ExecuteCMD(s_LDatos *datosCMD)
 {
     uint8_t str[35];
     switch (datosCMD->idCMD){
-    case 0xF0:
-        if(datosCMD->bufL[datosCMD->iDatos+1]==0x0D){
-        ui->commandsConsole->appendPlainText("ESTOY VIVO");
-        }
+    case 0xF0:Ack(datosCMD);
         break;
-
+    case 0xF1:
+        break;
     default:
         break;
     }
@@ -568,6 +581,13 @@ void MainWindow::ColocarPayload(s_EDatos *datosE, uint8_t *string, uint8_t nDato
     datosE->iTE++;
     if(datosE->iTE>=datosE->tamBuffer){
         datosE->iTE=0;
+    }
+}
+
+void MainWindow::Ack(s_LDatos *datosCMD)
+{
+    if(datosCMD->bufL[datosCMD->iDatos+1]==0x0D){
+        ui->commandsConsole->appendPlainText("ESTOY VIVO");
     }
 }
 
