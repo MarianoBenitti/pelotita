@@ -15,13 +15,18 @@ typedef struct {
     QPoint centroI;//centro de la pelotita inicial
     double posAntX;
     double posAntY;
-    double angulo;//angulo actual
+    double posIX;
+    double posIY;
     double anguloI;//angulo inicial
     double velI;//velocidad inicial
+    double velIY;
+    double velIX;
     double velX;//velocidad en X
     double velY;//velocidad en Y
     double gravedad;
     double friccion;
+    double tx;
+    double ty;
     int radio;//radio de la pelotita
     int alfha;//porcentaje de perdida de energia
     double escMetro;//a cuanto equivale 1 metro en pixeles
@@ -79,6 +84,7 @@ public:
     ~MainWindow();
     void TimerGen1();//metodo enlazado con el timer
     void RecalPelota(s_pelota *s_Pelota);//recalcula la posicion de la pelota segun los parametros
+    void RecalPelota2(s_pelota *s_Pelota);//recalcula la posicion segun el tiempo
     void BorrarPantalla();
 private slots:
     void on_BotonLanzar_clicked();
@@ -135,10 +141,52 @@ private slots:
      * */
             void ColocarPayload(s_EDatos *datosE,uint8_t *string,uint8_t nDatos);
 
-    //comandos
-
+    //COMANDOS
+            //COMANDOS DE RECEPCION
+            /** \fn Ack
+             * \brief
+             *  Esta funcion muestra el resultado que llego de la placa y lo muestra en el plainTextEdit
+             * \param[in]: datosCMD es la estructura del buffer donde se cargaran los comandos
+             * */
             void Ack(s_LDatos *datosCMD);
-private:
+            /** \fn Firmware
+             * \brief
+             *  Esta funcion muestra el firmware recibido desde la placa
+             * \param[in]: datosCMD es la estructura del buffer donde se cargaran los comandos
+             * */
+            void Firmware(s_LDatos *datosCMD);
+            /** \fn Ack
+             * \brief
+             *  Esta funcion verifica el comando desconocido que le llego a la placa e imprime la id del comando recibido en el plaintextedit
+             * \param[in]: datosCMD es la estructura del buffer donde se decodifico el comando
+             * */
+            void ComandoDesconocido(s_LDatos *datosCMD);
+            /** \fn LedsCommand
+             * \brief
+             *  Esta funcion verifica el comando desconocido que le llego a la placa e imprime la id del comando recibido en el plaintextedit
+             * \param[in]: LedstoAct los cuatro bytes menos significativos de esta variable indican que leds se actualizaran
+             *  \param[in]: LedstoAct los cuatro bytes menos significativos de esta variable indican el valor que se le colocara a los leds a actualizar
+             * */
+
+            //COMANDOS DE ENVIO
+            void LedsCommand(uint8_t LedstoAct,uint8_t LedsValue);
+            /** \fn WallCommand
+             * \brief
+             *  Esta funcion envia a la placa el muro en el cual la pelota choco 0(Derecha),1(Izquierda),2(Arriba) y 3(Abajo)
+             * \param[in]: wall es el numero correspondiente al muro chocado
+             * */
+            void WallCommand(uint8_t wall);
+            /** \fn ButtonsState
+             * \brief
+             *  Esta funcion envia a la placa una peticion del estado de los pulsadores
+             * */
+            void ButtonsState();
+
+            void on_ClearConsoleButton_clicked();
+
+            void on_Checkgravedad_clicked();
+
+        private:
     Ui::MainWindow *ui;
     s_pelota s_pelotita;
     QPaintBox *QPaintBall;//pantalla donde se pintara
@@ -150,5 +198,6 @@ private:
     s_LDatos datosLec;
     uint8_t bufferL[256];
     band banderas;
+    double gravedad;
 };
 #endif // MAINWINDOW_H

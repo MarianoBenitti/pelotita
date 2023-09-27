@@ -49,6 +49,13 @@
          <widget class="QPlainTextEdit" name="commandsConsole"/>
         </item>
         <item>
+         <widget class="QPushButton" name="ClearConsoleButton">
+          <property name="text">
+           <string>CLEAR</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <layout class="QVBoxLayout" name="PortLine">
           <item>
            <widget class="QLineEdit" name="PortLinEdit">
@@ -89,7 +96,7 @@
      </layout>
     </item>
     <item row="1" column="0">
-     <layout class="QHBoxLayout" name="TABLERO" stretch="0,0,0,0,0,0">
+     <layout class="QHBoxLayout" name="TABLERO" stretch="0,0,0,0,0">
       <item>
        <layout class="QHBoxLayout" name="TABLERORESETLANZAR">
         <item>
@@ -188,18 +195,22 @@
        </layout>
       </item>
       <item>
-       <widget class="QCheckBox" name="CheckTrayectoria">
-        <property name="text">
-         <string>TRAYECTORIA</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="CheckFriccion">
-        <property name="text">
-         <string>FRICCIÓN</string>
-        </property>
-       </widget>
+       <layout class="QVBoxLayout" name="verticalLayout">
+        <item>
+         <widget class="QCheckBox" name="CheckTrayectoria">
+          <property name="text">
+           <string>TRAYECTORIA</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="CheckFriccion">
+          <property name="text">
+           <string>FRICCIÓN</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
       <item>
        <widget class="QCheckBox" name="Checkgravedad">

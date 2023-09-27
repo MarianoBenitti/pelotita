@@ -3,7 +3,8 @@
 #include "QtMath"
 
 #define ISNEWCMD banderas.bit.b0
-
+//enumeracion con las id de los comandos
+typedef enum{ALIVEID=0xF0,ACKID=0xF0,FIRMWAREID=0XF1,LEDSID=0x10,BUTTONSID=0x12,WALLID=0x18}e_IDSCMD;
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -38,16 +39,18 @@ MainWindow::MainWindow(QWidget *parent)
 
 
     s_pelotita.InMove=0;
-    s_pelotita.alfha=20;
+    s_pelotita.alfha=10;
     s_pelotita.anguloI=-40;
     s_pelotita.escMetro=100;
     s_pelotita.radio=10;
     s_pelotita.centroI.setX(10+s_pelotita.radio);
     s_pelotita.centroI.setY(-(10+s_pelotita.radio));
     s_pelotita.velI=10;
-    s_pelotita.gravedad=0.098;
+    s_pelotita.gravedad=9.8;
     s_pelotita.friccion=0.05;
-
+    s_pelotita.tx=0;
+    s_pelotita.ty=0;
+    gravedad=0;
 }
 
 MainWindow::~MainWindow()
@@ -88,7 +91,7 @@ void MainWindow::TimerGen1(){
 
         }
         //recalculamos la posicion
-        RecalPelota(&s_pelotita);
+        RecalPelota2(&s_pelotita);
         //la dibujamos en la posicion actual
         pen.setColor(Qt::white);
         brush.setColor(Qt::blue);
@@ -96,7 +99,7 @@ void MainWindow::TimerGen1(){
         QPainterEsp.setBrush(brush);
         QPainterEsp.drawEllipse(s_pelotita.centro,s_pelotita.radio,s_pelotita.radio);
 
-        ui->Consola->setText(QString("VelocidadInicial:%1\nPosX:%2\nPosY:%3\nAngulo:%4\nVelX:%5\nVelY:%6").arg(s_pelotita.anguloI).arg(s_pelotita.centro.x()).arg(s_pelotita.centro.y()).arg(s_pelotita.angulo*180/M_PI).arg(s_pelotita.velX).arg(s_pelotita.velY));
+        ui->Consola->setText(QString("VelocidadInicial:%1\nPosX:%2\nPosY:%3\nAngulo:%4\nVelX:%5\nVelY:%6").arg(s_pelotita.anguloI).arg(s_pelotita.centro.x()).arg(s_pelotita.centro.y()).arg(s_pelotita.anguloI*180/M_PI).arg(s_pelotita.velX).arg(s_pelotita.velY));
     }else{
         QPainterEsp.drawEllipse(s_pelotita.centroI,s_pelotita.radio,s_pelotita.radio);
     }
@@ -105,7 +108,6 @@ void MainWindow::TimerGen1(){
     if (datosLec.iRE!=datosLec.iRL){
         DecodeCMD();
         ui->commandsConsole->appendPlainText("llega comando");
-        printf("[%i]{%i}",datosLec.iRE,datosLec.iRL);
     }
     if(ISNEWCMD){
         ExecuteCMD(&datosLec);
@@ -125,6 +127,11 @@ void MainWindow::on_BotonLanzar_clicked()
 {
     if(s_pelotita.InMove){
         s_pelotita.InMove=0;
+        if(ui->Checkgravedad->isChecked()){
+                gravedad=s_pelotita.gravedad;
+        }else{
+                gravedad=0;
+        }
         ui->BotonLanzar->setText("LANZAR");
         BorrarPantalla();
     }else{
@@ -133,10 +140,17 @@ void MainWindow::on_BotonLanzar_clicked()
         s_pelotita.velX=s_pelotita.velI*qCos(s_pelotita.anguloI/180*M_PI);
         s_pelotita.velY=s_pelotita.velI*qSin(s_pelotita.anguloI/180*M_PI);
         s_pelotita.velY=-s_pelotita.velY;//invertimos el signo porque el eje y esta invertido
+        s_pelotita.velIX=s_pelotita.velX;
+        s_pelotita.velIY=s_pelotita.velY;
         s_pelotita.centro.setX(s_pelotita.centroI.x());
         s_pelotita.centro.setY(s_pelotita.centroI.y());
         s_pelotita.posAntX=s_pelotita.centroI.x();
         s_pelotita.posAntY=s_pelotita.centroI.y();
+        s_pelotita.posIX=s_pelotita.centroI.x();
+        s_pelotita.posIY=s_pelotita.centroI.y();
+        s_pelotita.tx=0;
+        s_pelotita.ty=0;
+
     }
 }
 
@@ -145,13 +159,11 @@ void MainWindow::RecalPelota(s_pelota *s_Pelota){
     float posAntY;
     double porcRecVel;//porcentaje de distancia de velocidad recorrida antes del choque
     float distPared;
-    //posAntX=s_Pelota->centro.x();
-    //posAntY=s_Pelota->centro.y();
+
 
     posAntX=s_Pelota->posAntX;
     posAntY=s_Pelota->posAntY;
-    //calculamos el angulo de movimiento actual
-    s_Pelota->angulo=qAtan(-s_Pelota->velY/s_Pelota->velX);
+
     //con gravedad
     if((s_Pelota->centro.y()+s_Pelota->radio)<0 && ui->Checkgravedad->isChecked()){//si la pelota no toca el piso tiene aceleracion de la gravedad
         s_Pelota->velY=s_Pelota->velY+(s_Pelota->gravedad/100*s_Pelota->escMetro);
@@ -194,8 +206,8 @@ void MainWindow::RecalPelota(s_pelota *s_Pelota){
             s_Pelota->posAntX=(ui->widget->width()-s_Pelota->radio+(s_Pelota->velX/100*s_Pelota->escMetro)*(1-porcRecVel))-0.5;
             s_Pelota->centro.setX(qFloor(s_Pelota->posAntX));
         }
-
-}
+        WallCommand(0);
+    }
     //si choca la pared izquierda
     if((s_Pelota->centro.x()-s_Pelota->radio)<=0){
         s_Pelota->velX=(-s_Pelota->velX);
@@ -214,7 +226,7 @@ void MainWindow::RecalPelota(s_pelota *s_Pelota){
         s_Pelota->posAntX=s_Pelota->radio+(s_Pelota->velX/100*s_Pelota->escMetro)*(1-porcRecVel);
         s_Pelota->centro.setX(qCeil(s_Pelota->posAntX));
         }
-
+        WallCommand(1);
     }
 
     //si choca el techo
@@ -233,6 +245,7 @@ void MainWindow::RecalPelota(s_pelota *s_Pelota){
         s_Pelota->posAntY=(-ui->widget->height())+s_Pelota->radio+(s_Pelota->velY/100*s_Pelota->escMetro)*(1-porcRecVel);
         s_Pelota->centro.setY(qCeil(s_Pelota->posAntY));
         }
+        WallCommand(2);
     }
 
     //si choca el pizo
@@ -257,8 +270,133 @@ void MainWindow::RecalPelota(s_pelota *s_Pelota){
         s_Pelota->posAntY=(-s_Pelota->radio)+(s_Pelota->velY/100*s_Pelota->escMetro)*(1-porcRecVel);
         s_Pelota->centro.setY(qCeil(s_Pelota->posAntY));
         }
+       WallCommand(3);
+    }
+
+
+}
+
+void MainWindow::RecalPelota2(s_pelota *s_Pelota){
+    float posAntX;
+    float posAntY;
+    double tiempoalchoque;
+    double distPared;
+
+    s_Pelota->tx=s_Pelota->tx+0.01;
+    s_Pelota->ty=s_Pelota->ty+0.01;
+
+    posAntX=s_Pelota->posAntX;
+    posAntY=s_Pelota->posAntY;
+
+
+    //con coeficiente de friccion
+    if((s_Pelota->centro.y()+s_Pelota->radio)>=0 && ui->CheckFriccion->isChecked()){//si la pelota no toca el piso tiene aceleracion de la gravedad
+       if(s_Pelota->velX>0){
+        s_Pelota->velX=s_Pelota->velX-s_Pelota->friccion;
+        if(s_Pelota->velX<=0){//es decir si se pierde toda la energia
+            s_Pelota->velX=0;
+        }
+       }else{
+        s_Pelota->velX=s_Pelota->velX+s_Pelota->friccion;
+        if(s_Pelota->velX>=0){//es decir si se pierde toda la energia
+             s_Pelota->velX=0;
+        }
+       }
+       s_Pelota->velIX=s_Pelota->velX;
+       s_Pelota->posIX=s_Pelota->posAntX;
+       s_Pelota->tx=0;
+    }
+    //cambiamos la posicion
+    if(s_Pelota->posAntY<0){
+    s_Pelota->velY=s_Pelota->velIY+gravedad*s_Pelota->ty;
+    }
+    s_Pelota->posAntY=s_Pelota->posIY+(s_Pelota->velIY*s_Pelota->escMetro*s_Pelota->ty)+((gravedad*s_Pelota->escMetro*(s_Pelota->ty*s_Pelota->ty))/2);
+    s_Pelota->posAntX=s_Pelota->posIX+(s_Pelota->velIX*s_Pelota->escMetro*s_Pelota->tx);
+
+    //si choca la pared derecha
+    if((s_Pelota->posAntX+s_Pelota->radio)>=ui->widget->width() && s_Pelota->velX>0){
+
+       distPared=ui->widget->width()-posAntX+s_Pelota->radio;
+       tiempoalchoque=(distPared/s_Pelota->velX)*0.01;
+
+       s_Pelota->velX=(-s_Pelota->velX);
+
+       //se reduce la velocidad
+       s_Pelota->velX=s_Pelota->velX-s_Pelota->velX*(s_Pelota->alfha/100.0);
+
+       s_Pelota->posAntX=ui->widget->width()+(s_Pelota->velX*(0.01-tiempoalchoque))-s_Pelota->radio;
+
+       s_Pelota->posIX=s_Pelota->posAntX;
+       s_Pelota->velIX=s_Pelota->velX;
+       s_Pelota->tx=0;
+       WallCommand(0);
+    }
+
+    //si choca la pared izquierda
+    if(((s_Pelota->posAntX)-s_Pelota->radio)<=0 && s_Pelota->velX<0){
+
+       distPared=posAntX-s_Pelota->radio;
+       tiempoalchoque=(distPared/s_Pelota->velX)*0.01;
+
+       s_Pelota->velX=(-s_Pelota->velX);
+
+       //se reduce la velocidad
+       s_Pelota->velX=s_Pelota->velX-s_Pelota->velX*(s_Pelota->alfha/100.0);
+
+       s_Pelota->posAntX=(s_Pelota->velX*(0.01-tiempoalchoque))+s_Pelota->radio;
+
+       s_Pelota->posIX=s_Pelota->posAntX;
+        s_Pelota->velIX=s_Pelota->velX;
+        s_Pelota->tx=0;
+        WallCommand(1);
+    }
+
+    //si choca el techo
+    if((s_Pelota->posAntY-s_Pelota->radio)<=(-ui->widget->height()) && s_Pelota->velY<0){
+
+
+        distPared=ui->widget->height()+posAntY-s_Pelota->radio;
+        tiempoalchoque=-((distPared/s_Pelota->velY)*0.01);
+
+        s_Pelota->velY=(-s_Pelota->velY);
+
+        //se reduce la velocidad
+        s_Pelota->velY=s_Pelota->velY-s_Pelota->velY*((s_Pelota->alfha/100.0));
+
+        s_Pelota->posAntY=s_Pelota->radio+(-ui->widget->height())+(s_Pelota->velY*(0.01-tiempoalchoque));
+
+        s_Pelota->posIY=s_Pelota->posAntY;
+        s_Pelota->velIY=s_Pelota->velY;
+        s_Pelota->ty=0;
+        WallCommand(2);
+    }
+
+    //si choca el pizo
+    if((s_Pelota->posAntY+s_Pelota->radio)>=0 && s_Pelota->velY>0){
+
+       distPared=-(posAntY+s_Pelota->radio);
+       tiempoalchoque=((distPared/s_Pelota->velY)*0.01);
+
+       s_Pelota->velY=(-s_Pelota->velY);
+
+       s_Pelota->ty=0.01-tiempoalchoque;
+
+       //se reduce la velocidad
+       s_Pelota->velY=s_Pelota->velY-s_Pelota->velY*(s_Pelota->alfha/100.0);
+       if(tiempoalchoque<=0){
+        s_Pelota->velY=0;
+        gravedad=0;
        }
 
+       s_Pelota->velIY=s_Pelota->velY;
+       s_Pelota->posAntY=-s_Pelota->radio+(s_Pelota->velIY*s_Pelota->escMetro*s_Pelota->ty)+((gravedad*s_Pelota->escMetro*(s_Pelota->ty*s_Pelota->ty))/2);
+       s_Pelota->ty=0;
+       s_Pelota->posIY=s_Pelota->posAntY;
+
+       WallCommand(3);
+    }
+    s_Pelota->centro.setX(qCeil(s_Pelota->posAntX+0.5));
+    s_Pelota->centro.setY(qCeil(s_Pelota->posAntY-0.5));
 
 }
 
@@ -275,9 +413,6 @@ void MainWindow::BorrarPantalla(){
     QPaintEsp.drawRect(0,0,ui->widget->width(),ui->widget->height());
 }
 
-
-
-
 void MainWindow::on_BotonAngulo_clicked()
 {
     int angulo;
@@ -286,7 +421,6 @@ void MainWindow::on_BotonAngulo_clicked()
     angulo=str.toInt();
     s_pelotita.anguloI=angulo;
 }
-
 
 void MainWindow::on_BotonVelocidad_clicked()
 {
@@ -319,7 +453,6 @@ void MainWindow::resizeEvent(QResizeEvent *event)
     QPaintBall->resize(ui->widget->width(),ui->widget->height());
 
 }
-
 
 void MainWindow::on_BotonPosX_clicked()
 {
@@ -355,7 +488,6 @@ void MainWindow::OnRxQSerialPort1(){
     }
 }
 
-
 void MainWindow::on_OpenCloseButton_clicked()
 {
     if(QSerialPort1->isOpen()){
@@ -372,31 +504,39 @@ void MainWindow::on_OpenCloseButton_clicked()
     }
 }
 
-
-
 void MainWindow::on_SendButton_clicked()
-{
+{   uint8_t str[256];
+
     const char *comandos[4];
     const char ALIVE[]="ALIVE";
     const char FIRMWARE[]="FIRMWARE";
+    const char DESCONOCIDO[]="DESCONOCIDO";
     comandos[0]=ALIVE;
     comandos[1]=FIRMWARE;
+    comandos[2]=DESCONOCIDO;
     int comand=0;
     int i;
-    uint8_t str[256];
+
+
     for(i=0;i<4;i++){
         if(QString::compare(QString(comandos[i]),QString(ui->CommandlineEdit->text()),Qt::CaseSensitive)==0){
             comand=i;
             switch(comand){
-            case 0: ColocarHeader(&datosEsc,0xF0,2);
+            case 0: //ui->commandsConsole->appendPlainText("ALIVE");
+                    ColocarHeader(&datosEsc,ALIVEID,2);
+                    ColocarPayload(&datosEsc,str,0);
+
+                break;
+            case 1: //ui->commandsConsole->appendPlainText("FIRMWARE");
+                    ColocarHeader(&datosEsc,FIRMWAREID,2 );
                     ColocarPayload(&datosEsc,str,0);
                 break;
-            case 1: ColocarHeader(&datosEsc,0xF1,2);
+            case 2:ui->commandsConsole->appendPlainText("DESCONOCIDO");
+                    ColocarHeader(&datosEsc,0x07,2);
                     ColocarPayload(&datosEsc,str,0);
                 break;
-            case 2:
-                break;
-                default:
+            default:
+
             break;
 
             }
@@ -404,8 +544,23 @@ void MainWindow::on_SendButton_clicked()
     }
 
     if(QSerialPort1->isOpen()){
-        QSerialPort1->write((char*)datosEsc.bufE,8);
+      i=0;
+      while(datosEsc.iTE!=datosEsc.iTL){
+            //PASAMOS LOS DATOS A UN PEQUEÑO BUFFER INTERMEDIO PARA ENVIARLOS
+            str[i]=datosEsc.bufE[datosEsc.iTL];
+            datosEsc.iTL++;
+            if(datosEsc.iTL>=datosEsc.tamBuffer){
+            datosEsc.iTL=0;
+            }
+            i++;
+      }
+      QSerialPort1->write((char *)str,i+1);//enviamos la cantidad de bytes disponibles para enviar
     }
+}
+
+void MainWindow::on_ClearConsoleButton_clicked()
+{
+    ui->commandsConsole->clear();
 }
 
 void MainWindow::DecodeCMD()
@@ -515,13 +670,14 @@ void MainWindow::DecodeCMD()
 
 void MainWindow::ExecuteCMD(s_LDatos *datosCMD)
 {
-    uint8_t str[35];
     switch (datosCMD->idCMD){
-    case 0xF0:Ack(datosCMD);
+    case ACKID:Ack(datosCMD);
         break;
-    case 0xF1:
+    case FIRMWAREID:Firmware(datosCMD);
         break;
-    default:
+    case BUTTONSID:ui->commandsConsole->appendPlainText("botones");
+        break;
+    default:ComandoDesconocido(datosCMD);
         break;
     }
 }
@@ -584,10 +740,111 @@ void MainWindow::ColocarPayload(s_EDatos *datosE, uint8_t *string, uint8_t nDato
     }
 }
 
+//COMANDOS DE RECEPCION
 void MainWindow::Ack(s_LDatos *datosCMD)
 {
     if(datosCMD->bufL[datosCMD->iDatos+1]==0x0D){
         ui->commandsConsole->appendPlainText("ESTOY VIVO");
     }
+}
+
+void MainWindow::Firmware(s_LDatos *datosCMD)
+{  QString str;
+    str="La version es:";
+    str=str+QString(QChar(datosCMD->bufL[datosCMD->iDatos+1]));
+    ui->commandsConsole->appendPlainText(str);
+
+}
+
+void MainWindow::ComandoDesconocido(s_LDatos *datosCMD)
+{   QString str;
+
+    if(datosCMD->bufL[datosCMD->iDatos+1]==0xFF){
+        str=QString("El comando con la siguiente ID no existe:%1").arg(datosCMD->idCMD,0,16);
+        ui->commandsConsole->appendPlainText(str);
+    }
+}
+
+
+//COMANDOS DE ENVIO
+void MainWindow::LedsCommand(uint8_t LedstoAct, uint8_t LedsValue)
+{   uint8_t str[256];
+    int i;
+    str[0]=LedstoAct;
+    str[1]=LedsValue;
+    ColocarHeader(&datosEsc,LEDSID,4);
+    ColocarPayload(&datosEsc,str,2);
+
+    if(QSerialPort1->isOpen()){
+        i=0;
+        while(datosEsc.iTE!=datosEsc.iTL){
+        //PASAMOS LOS DATOS A UN PEQUEÑO BUFFER INTERMEDIO PARA ENVIARLOS
+        str[i]=datosEsc.bufE[datosEsc.iTL];
+        datosEsc.iTL++;
+        if(datosEsc.iTL>=datosEsc.tamBuffer){
+                    datosEsc.iTL=0;
+        }
+        i++;
+        }
+        QSerialPort1->write((char *)str,i+1);//enviamos la cantidad de bytes disponibles para enviar
+    }
+}
+
+void MainWindow::WallCommand(uint8_t wall)
+{
+    uint8_t str[256];
+    int i;
+    str[0]=wall;
+    ColocarHeader(&datosEsc,WALLID,3);
+    ColocarPayload(&datosEsc,str,1);
+
+    if(QSerialPort1->isOpen()){
+        i=0;
+        while(datosEsc.iTE!=datosEsc.iTL){
+        //PASAMOS LOS DATOS A UN PEQUEÑO BUFFER INTERMEDIO PARA ENVIARLOS
+        str[i]=datosEsc.bufE[datosEsc.iTL];
+        datosEsc.iTL++;
+        if(datosEsc.iTL>=datosEsc.tamBuffer){
+                    datosEsc.iTL=0;
+        }
+        i++;
+        }
+        QSerialPort1->write((char *)str,i+1);//enviamos la cantidad de bytes disponibles para enviar
+    }
+}
+
+void MainWindow::ButtonsState()
+{
+    uint8_t str[256];
+    int i;
+    ColocarHeader(&datosEsc,BUTTONSID,2);
+    ColocarPayload(&datosEsc,str,0);
+
+    if(QSerialPort1->isOpen()){
+        i=0;
+        while(datosEsc.iTE!=datosEsc.iTL){
+        //PASAMOS LOS DATOS A UN PEQUEÑO BUFFER INTERMEDIO PARA ENVIARLOS
+        str[i]=datosEsc.bufE[datosEsc.iTL];
+        datosEsc.iTL++;
+        if(datosEsc.iTL>=datosEsc.tamBuffer){
+                    datosEsc.iTL=0;
+        }
+        i++;
+        }
+        QSerialPort1->write((char *)str,i+1);//enviamos la cantidad de bytes disponibles para enviar
+    }
+}
+
+void MainWindow::on_Checkgravedad_clicked()
+{
+    //con gravedad
+    if(ui->Checkgravedad->isChecked()){
+        gravedad=s_pelotita.gravedad;
+    }else{
+        gravedad=0;
+    }
+    s_pelotita.ty=0;
+    s_pelotita.posIY=s_pelotita.posAntY;
+    s_pelotita.velIY=s_pelotita.velY;
 }
 
